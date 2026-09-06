@@ -1,0 +1,1 @@
+﻿Scaffold-DbContext "Name=ConnectionStrings:OrderMsvDBConnection" Npgsql.EntityFrameworkCore.PostgreSQL -OutputDir Models -Context OrderMsvDbContext -Force

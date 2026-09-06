@@ -3,6 +3,7 @@ using MessageMQCommon.Parameters;
 using Microsoft.EntityFrameworkCore;
 using Order.Msv.Models;
 using Order.Msv.Profiles;
+using Order.Msv.Services;
 // Pengaturan ini memaksa .NET dan Npgsql menyelaraskan format DateTime lama/lokal menjadi kompatibel dengan pemformatan database
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,8 @@ builder.Services.AddDbContext<OrderMsvDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("OrderMsvDBConnection")));
 builder.Services.AddControllers();
 builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
+
+builder.Services.AddScoped<OrderService>();
 
 var rabbitMqSettings = builder.Configuration.GetSection("RabbitMqSettings").Get<RabbitMQParameter>()?? new RabbitMQParameter();
 builder.Services.AddMassTransit(x =>

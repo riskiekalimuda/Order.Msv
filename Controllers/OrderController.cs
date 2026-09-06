@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Order.Msv.DTOs;
 using Order.Msv.Models;
+using Order.Msv.Services;
 
 namespace Order.Msv.Controllers
 {
@@ -17,11 +18,13 @@ namespace Order.Msv.Controllers
         private readonly OrderMsvDbContext _context;
         private readonly ISendEndpointProvider _sendEndpointProvider;
         private readonly IMapper _mapper;
-        public OrderController(OrderMsvDbContext context, ISendEndpointProvider sendEndpointProvider, IMapper mapper)
+        private readonly OrderService _orderService;
+        public OrderController(OrderMsvDbContext context, ISendEndpointProvider sendEndpointProvider, IMapper mapper, OrderService orderService)
         {
             _context = context;
             _sendEndpointProvider = sendEndpointProvider;
             _mapper = mapper;
+            _orderService = orderService;
         }
 
         [HttpPost("create")]
@@ -31,27 +34,30 @@ namespace Order.Msv.Controllers
             {
                 return BadRequest("Request body is null.");
             }
+
+            var result = await _orderService.CreateOrderAsync(request);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
             try
             {
-                var order = _mapper.Map<TrxOrder>(request);
-                order.CreatedAt = DateTime.Now;
-                order.UpdatedAt = DateTime.Now;
-                _context.TrxOrders.Add(order);
-                await _context.SaveChangesAsync(); // Save the order to the database first to get the generated ID
-
-                var orderMessage = _mapper.Map<OrderMessage>(order); 
+                var orderMessage = _mapper.Map<OrderMessage>(result.Data);
                 var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.AddOrderQueue}"));
-                await sendEndpoint.Send(orderMessage); 
+                await sendEndpoint.Send(orderMessage);
                 await _context.SaveChangesAsync();
 
-
-
-                return Ok(new { OrderID = order.Id, Message = "Order created successfully." });
+                return Ok(new { OrderID = Guid.NewGuid(), Message = "Order created successfully." });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
-            }   
-        }   
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}");
+            }
+        }
     }
 }
+
+
+         
+
+

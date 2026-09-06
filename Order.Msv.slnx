@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../../MessageMQCommon/MessageMQCommon.csproj" />
+  <Project Path="Order.Msv.csproj" />
+</Solution>

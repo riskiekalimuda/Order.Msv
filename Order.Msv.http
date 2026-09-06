@@ -1,0 +1,6 @@
+@Order.Msv_HostAddress = http://localhost:5012
+
+GET {{Order.Msv_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

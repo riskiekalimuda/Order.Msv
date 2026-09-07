@@ -1,0 +1,40 @@
+{
+  "info": {
+    "_postman_id": "876d6eb9-5c6e-40aa-8e0c-4110a0fa121d",
+    "name": "MMICROSERVICE_VS 2026",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "20981957"
+  },
+  "item": [
+    {
+      "name": "CREATE ORDER",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"orderNumber\": \"ORD-20260905-001\",\r\n  \"customerId\": \"b1f2c9e4-3a7d-4b2a-9e8f-0a1b2c3d4e5f\",\r\n  \"totalAmount\": 150.75,\r\n  \"status\": \"Pending\",\r\n  \"trxOrdersDetails\": [\r\n    {\r\n      \"productId\": \"85c17894-e1bb-42b3-91b3-844aacc84dd0\",\r\n      \"quantity\": 2,\r\n      \"pricePerUnit\": 50.25,\r\n      \"createdAt\": \"2026-09-05T10:30:00Z\"\r\n    },\r\n    {\r\n      \"productId\": \"97319b10-8e1c-435d-b0cf-8e0af1b7fa5d\",\r\n      \"quantity\": 1,\r\n      \"pricePerUnit\": 50.25,\r\n      \"createdAt\": \"2026-09-05T10:30:00Z\"\r\n    }\r\n  ]\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5012/api/order/create",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5012",
+          "path": [
+            "api",
+            "order",
+            "create"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

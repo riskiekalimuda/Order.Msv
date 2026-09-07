@@ -1,6 +1,8 @@
 using MassTransit;
+using MessageMQCommon.MQ.Names;
 using MessageMQCommon.Parameters;
 using Microsoft.EntityFrameworkCore;
+using Order.Msv.Consumers;
 using Order.Msv.Models;
 using Order.Msv.Profiles;
 using Order.Msv.Services;
@@ -24,6 +26,9 @@ builder.Services.AddMassTransit(x =>
         o.UseBusOutbox();
         o.QueryDelay = TimeSpan.FromSeconds(10);
     });
+
+    x.AddConsumersFromNamespaceContaining<OrderCreatedResultConsumer>();    
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(rabbitMqSettings.Host, rabbitMqSettings.VirtualHost, h =>
@@ -31,6 +36,14 @@ builder.Services.AddMassTransit(x =>
             h.Username(rabbitMqSettings.Username);
             h.Password(rabbitMqSettings.Password);
         });
+
+        cfg.ReceiveEndpoint(QueueNames.OrderQueue.AddOrderResultQueue, e =>
+        {
+            e.Durable = true;
+            e.UseMessageRetry(r => r.Interval(20, 10));
+            e.ConfigureConsumer<OrderCreatedResultConsumer>(context);
+        }); 
+
         cfg.ConfigureEndpoints(context);
     });
 });

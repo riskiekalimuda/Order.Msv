@@ -35,6 +35,16 @@ namespace Order.Msv.Controllers
                 return BadRequest("Request body is null.");
             }
 
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdStr) || string.IsNullOrEmpty(userIdStr))
+            {
+                return Unauthorized("Unauthorized: User info not found in headers.");
+            }
+
+            if (!Guid.TryParse(userIdStr.ToString(), out Guid userId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
             var result = await _orderService.CreateOrderAsync(request);
             if (!result.IsSuccess)
             {

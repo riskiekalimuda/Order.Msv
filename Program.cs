@@ -49,6 +49,7 @@ builder.Services.AddMassTransit(x =>
 });
 
 var app = builder.Build();
+app.UseRouting();
 app.MapControllers();
 
 

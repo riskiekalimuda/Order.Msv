@@ -17,6 +17,7 @@ namespace Order.Msv.Extensions
                     tracing
                         .AddAspNetCoreInstrumentation(options => options.RecordException = true) // Menangkap incoming HTTP request dari YARP
                         .AddHttpClientInstrumentation(options => options.RecordException = true) // Menangkap jika Order memanggil Purchase via HTTP
+                        .AddSource("MassTransit")
                         .AddOtlpExporter(options =>
                         {
                             options.Endpoint = new Uri(configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://localhost:4317");

@@ -57,7 +57,7 @@ namespace Order.Msv.Controllers
                 await sendEndpoint.Send(orderMessage);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { OrderID = Guid.NewGuid(), Message = "Order created successfully." });
+                return Ok(new { OrderID = result.Data.Id, Message = "Order created successfully." });
             }
             catch (Exception ex)
             {

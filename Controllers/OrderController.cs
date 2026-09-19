@@ -1,9 +1,5 @@
 ﻿using AutoMapper;
 using MassTransit;
-using MessageMQCommon.MQ.Messages.OrderMsv;
-using MessageMQCommon.MQ.Names;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Order.Msv.DTOs;
 using Order.Msv.Models;
@@ -50,19 +46,7 @@ namespace Order.Msv.Controllers
             {
                 return BadRequest(result.ErrorMessage);
             }
-            try
-            {
-                var orderMessage = _mapper.Map<OrderMessage>(result.Data);
-                var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.AddOrderQueue}"));
-                await sendEndpoint.Send(orderMessage);
-                await _context.SaveChangesAsync();
-
-                return Ok(new { OrderID = result.Data.Id, Message = "Order created successfully." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}");
-            }
+            return Ok(new { OrderID = result.Data.Id, Message = "Order created successfully." });
         }
     }
 }

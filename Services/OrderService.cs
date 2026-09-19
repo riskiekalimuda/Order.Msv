@@ -1,9 +1,13 @@
 ﻿using AutoMapper;
+using MassTransit;
+using MassTransit.Transports;
 using MessageMQCommon.MQ.Messages.OrderMsv;
+using MessageMQCommon.MQ.Names;
 using MessageMQCommon.Respones;
+using Microsoft.EntityFrameworkCore;
 using Order.Msv.DTOs;
 using Order.Msv.Models;
-using Microsoft.EntityFrameworkCore;    
+using static MassTransit.ValidationResultExtensions;
 
 namespace Order.Msv.Services
 {
@@ -12,11 +16,14 @@ namespace Order.Msv.Services
         private readonly OrderMsvDbContext _context;
         private readonly ILogger<OrderService> _logger;
         private readonly IMapper _mapper;
-        public OrderService(OrderMsvDbContext context, ILogger<OrderService> logger, IMapper mapper)
+        private readonly ISendEndpointProvider _sendEndpointProvider;
+        public OrderService(OrderMsvDbContext context, ILogger<OrderService> logger
+            , IMapper mapper, ISendEndpointProvider sendEndpointProvider)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
+            _sendEndpointProvider = sendEndpointProvider;
         }
 
         public async Task<ServiceResult<TrxOrder>> UpdateOrderAsync(OrderResultMessage orderResultMessage)
@@ -43,6 +50,7 @@ namespace Order.Msv.Services
 
         public async Task<ServiceResult<TrxOrder>> CreateOrderAsync(CreateOrderRequest orderRequest)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var order = _mapper.Map<TrxOrder>(orderRequest);
@@ -50,10 +58,18 @@ namespace Order.Msv.Services
                 order.UpdatedAt = DateTime.Now;
                 _context.TrxOrders.Add(order);
                 await _context.SaveChangesAsync();
+
+                var orderMessage = _mapper.Map<OrderMessage>(order);
+                var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.AddOrderQueue}"));
+                await sendEndpoint.Send(orderMessage);
+
+                await transaction.CommitAsync();
+
                 return new ServiceResult<TrxOrder>(true) { IsSuccess = true, Data = order };
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating order");
                 return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Error creating order", ErrorCode = "DATABASE_ERROR" };
             }

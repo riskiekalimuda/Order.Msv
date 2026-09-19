@@ -20,36 +20,7 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
 
 builder.Services.AddScoped<OrderService>();
 
-var rabbitMqSettings = builder.Configuration.GetSection("RabbitMqSettings").Get<RabbitMQParameter>()?? new RabbitMQParameter();
-builder.Services.AddMassTransit(x =>
-{
-    x.AddEntityFrameworkOutbox<OrderMsvDbContext>(o =>
-    {
-        o.UsePostgres();
-        o.UseBusOutbox();
-        o.QueryDelay = TimeSpan.FromSeconds(10);
-    });
-
-    x.AddConsumersFromNamespaceContaining<OrderCreatedResultConsumer>();    
-
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host(rabbitMqSettings.Host, rabbitMqSettings.VirtualHost, h =>
-        {
-            h.Username(rabbitMqSettings.Username);
-            h.Password(rabbitMqSettings.Password);
-        });
-
-        cfg.ReceiveEndpoint(QueueNames.OrderQueue.AddOrderResultQueue, e =>
-        {
-            e.Durable = true;
-            e.UseMessageRetry(r => r.Interval(20, 10));
-            e.ConfigureConsumer<OrderCreatedResultConsumer>(context);
-        }); 
-
-        cfg.ConfigureEndpoints(context);
-    });
-});
+builder.Services.AddCustomMassTransit(builder.Configuration);
 
 var app = builder.Build();
 app.UseRouting();

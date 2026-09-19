@@ -24,7 +24,7 @@ namespace Order.Msv.Consumers
             var message = context.Message;
             try
             {
-                var updatedOrder = await _orderService.UpdateOrderAsync(message);
+                var updatedOrder = await _orderService.UpdateStatusOrderAsync(message);
 
                 _logger.LogInformation($"Received OrderCreatedResultMessage: OrderNumber={message.OrderNumber}, OrderResult={message.OrderResult}");
             }

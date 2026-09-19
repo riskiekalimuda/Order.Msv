@@ -26,7 +26,7 @@ namespace Order.Msv.Services
             _sendEndpointProvider = sendEndpointProvider;
         }
 
-        public async Task<ServiceResult<TrxOrder>> UpdateOrderAsync(OrderResultMessage orderResultMessage)
+        public async Task<ServiceResult<TrxOrder>> UpdateStatusOrderAsync(OrderResultMessage orderResultMessage)
         {
             try
             {
@@ -75,6 +75,50 @@ namespace Order.Msv.Services
                 _logger.LogError(ex, "Error creating order");
                 return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Error creating order", ErrorCode = "DATABASE_ERROR" };
             }
-        }   
+        }
+
+        public async Task<ServiceResult<TrxOrder>> UpdateOrderAsync(UpdateOrderRequest updateOrderRequest)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var existingOrder = await _context.TrxOrders.FindAsync(updateOrderRequest.Id);
+                if (existingOrder == null)
+                {
+                    return new ServiceResult<TrxOrder>(false)
+                    {
+                        IsSuccess = false,
+                        ErrorMessage = "Order not found.",
+                        ErrorCode = "NOT_FOUND"
+                    };
+                }
+
+                _mapper.Map(updateOrderRequest, existingOrder);
+
+                existingOrder.UpdatedAt = DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                var orderMessage = _mapper.Map<UpdateOrderMessage>(existingOrder);
+                var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.UpdateOrderQueue}"));
+                await sendEndpoint.Send(orderMessage);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new ServiceResult<TrxOrder>(true) { IsSuccess = true, Data = existingOrder };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error updating order with ID {OrderId}", updateOrderRequest.Id);
+                return new ServiceResult<TrxOrder>(false)
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Failed update order.",
+                    ErrorCode = "DATABASE_ERROR"
+                };
+            }
+
+        }
     }
 }

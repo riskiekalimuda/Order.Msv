@@ -48,6 +48,30 @@ namespace Order.Msv.Controllers
             }
             return Ok(new { OrderID = result.Data.Id, Message = "Order created successfully." });
         }
+
+        [HttpPost("Update")]
+        public async Task<IActionResult> UpdateOrder([FromBody] UpdateOrderRequest updateOrderRequest)
+        {
+            if(updateOrderRequest == null)
+            {
+                return BadRequest("Request body is null");
+            }
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdStr) || string.IsNullOrEmpty(userIdStr))
+            {
+                return Unauthorized("Unauthorized: User info not found in headers.");
+            }
+
+            if (!Guid.TryParse(userIdStr.ToString(), out Guid userId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+            var result = await _orderService.UpdateOrderAsync(updateOrderRequest);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+            return Ok(new { OrderID = result.Data.Id, Message = "Order created successfully." });
+        }
     }
 }
 

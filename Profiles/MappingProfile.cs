@@ -21,6 +21,10 @@ namespace Order.Msv.Profiles
 
             CreateMap<TrxOrder, OrderMessage>();
             CreateMap<TrxOrdersDetail, OrderDetailMessage>();
+            CreateMap<UpdateOrderRequest, TrxOrder>();
+            CreateMap<UpdateOrderDetailRequest, TrxOrdersDetail>();
+            CreateMap<TrxOrder, UpdateOrderMessage>();
+            CreateMap<TrxOrdersDetail, UpdateOrderDetailMessage>();
         }
     }
 }

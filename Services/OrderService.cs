@@ -63,6 +63,8 @@ namespace Order.Msv.Services
                 var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.AddOrderQueue}"));
                 await sendEndpoint.Send(orderMessage);
 
+                await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
 
                 return new ServiceResult<TrxOrder>(true) { IsSuccess = true, Data = order };

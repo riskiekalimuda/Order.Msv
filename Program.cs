@@ -1,8 +1,4 @@
-using MassTransit;
-using MessageMQCommon.MQ.Names;
-using MessageMQCommon.Parameters;
 using Microsoft.EntityFrameworkCore;
-using Order.Msv.Consumers;
 using Order.Msv.Extensions;
 using Order.Msv.Models;
 using Order.Msv.Profiles;
@@ -15,12 +11,13 @@ builder.Services.AddOrderTelemetry(builder.Configuration);
 
 builder.Services.AddDbContext<OrderMsvDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("OrderMsvDBConnection")));
-builder.Services.AddControllers();
 builder.Services.AddAutoMapper(cfg => { }, typeof(MappingProfile).Assembly);
 
 builder.Services.AddScoped<OrderService>();
 
 builder.Services.AddCustomMassTransit(builder.Configuration);
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 app.UseRouting();

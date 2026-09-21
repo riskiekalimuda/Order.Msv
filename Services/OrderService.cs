@@ -26,6 +26,29 @@ namespace Order.Msv.Services
             _sendEndpointProvider = sendEndpointProvider;
         }
 
+        public async Task<ServiceResult<TrxOrder>>UpdateResultOrderAsync(UpdateOrderResultMessage updateResult)
+        {
+            try
+            {
+                var selectedOrder = await _context.TrxOrders.FirstOrDefaultAsync(x => x.OrderNumber == updateResult.OrderNumber);
+                if(selectedOrder == null)
+                {
+                    _logger.LogInformation($"Order number: {updateResult.OrderNumber} not found");
+                    return new ServiceResult<TrxOrder>(false) { IsSuccess= false, ErrorMessage=$"Order number: {updateResult.OrderNumber} not found" };
+                }
+                selectedOrder.Status = updateResult.UpdateOrderResult;
+                selectedOrder.UpdatedAt = DateTime.Now;
+                 _context.TrxOrders.Update(selectedOrder);
+                await _context.SaveChangesAsync();
+                return new ServiceResult<TrxOrder>(true) { IsSuccess = true, Data = selectedOrder };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, "Error update order");
+                return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Error updating order", ErrorCode = "DATABASE_ERROR" };
+            }
+        }
+
         public async Task<ServiceResult<TrxOrder>> UpdateStatusOrderAsync(OrderResultMessage orderResultMessage)
         {
             try

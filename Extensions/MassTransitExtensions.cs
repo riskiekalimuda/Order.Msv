@@ -21,6 +21,7 @@ namespace Order.Msv.Extensions
                 });
 
                 x.AddConsumersFromNamespaceContaining<OrderCreatedResultConsumer>();
+                x.AddConsumersFromNamespaceContaining<UpdateOrderResultConsumer>();
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -35,6 +36,13 @@ namespace Order.Msv.Extensions
                         e.Durable = true;
                         e.UseMessageRetry(r => r.Interval(20, 10));
                         e.ConfigureConsumer<OrderCreatedResultConsumer>(context);
+                    });
+
+                    cfg.ReceiveEndpoint(QueueNames.OrderQueue.UpdateOrderResultQueue, e =>
+                    {
+                        e.Durable = true;
+                        e.UseMessageRetry(r => r.Interval(20, 10));
+                        e.ConfigureConsumer<UpdateOrderResultConsumer>(context);
                     });
 
                     cfg.ConfigureEndpoints(context);

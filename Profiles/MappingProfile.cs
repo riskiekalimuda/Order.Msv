@@ -25,6 +25,13 @@ namespace Order.Msv.Profiles
             CreateMap<UpdateOrderDetailRequest, TrxOrdersDetail>();
             CreateMap<TrxOrder, UpdateOrderMessage>();
             CreateMap<TrxOrdersDetail, UpdateOrderDetailMessage>();
+            CreateMap<TrxOrder, DeleteOrderMessage>()
+                .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.ListDeleteOrderDetails, opt => opt.MapFrom(src => src.TrxOrdersDetails));
+            CreateMap<TrxOrdersDetail, DeleteOrderDetails>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
+                .ForMember(dest => dest.Qty, opt => opt.MapFrom(src => src.Quantity));
         }
     }
 }

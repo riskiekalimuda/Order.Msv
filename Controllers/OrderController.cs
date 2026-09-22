@@ -23,6 +23,35 @@ namespace Order.Msv.Controllers
             _orderService = orderService;
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult>DeleteOrder(Guid id)
+        {
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdStr) || string.IsNullOrEmpty(userIdStr))
+            {
+                return Unauthorized("Unauthorized: User info not found in headers.");
+            }
+
+            if (!Guid.TryParse(userIdStr.ToString(), out Guid userId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
+            if (id == Guid.Empty)
+            {
+                return BadRequest("Id is empty.");
+            }
+
+            var result = await _orderService.DeleteOrder(id);
+            if(result.IsSuccess)
+            {
+                return Ok(new { OrderId = id, Message = "Delete Successfully." });
+            }
+            else
+            {
+                return BadRequest($"Delete failed with error {result.ErrorMessage}.");
+            }
+        }
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {

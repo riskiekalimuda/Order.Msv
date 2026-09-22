@@ -26,6 +26,37 @@ namespace Order.Msv.Services
             _sendEndpointProvider = sendEndpointProvider;
         }
 
+        public async Task<ServiceResult<Guid>>DeleteOrder(Guid id)
+        {
+            try
+            {
+                var order = await _context.TrxOrders
+                    .Include(x => x.TrxOrdersDetails)
+                    .FirstOrDefaultAsync(x => x.Id == id);
+
+                if(order == null)
+                {
+                    _logger.LogInformation($"Order with id: {id} was not found.");
+                    return new ServiceResult<Guid>(false) { IsSuccess=false, ErrorMessage= $"Order with id: {id} was not found." };
+                }
+
+                var deleteMsg = _mapper.Map<DeleteOrderMessage>(order);
+
+                _context.TrxOrders.Remove(order);
+                var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.DeleteOrderQueue}"));
+                await sendEndpoint.Send(deleteMsg);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Order with id: {id} was successfully deleted.");
+                return new ServiceResult<Guid>(true) { IsSuccess=true, Data = id };
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Order with id: {id} was failled deleted with error: {ex.Message}");
+                return new ServiceResult<Guid>(false) { IsSuccess = false, Data = id , ErrorMessage= $"Order with id: {id} was failled deleted with error: {ex.Message}" };
+            }
+        }
+
         public async Task<ServiceResult<TrxOrder>>UpdateResultOrderAsync(UpdateOrderResultMessage updateResult)
         {
             try

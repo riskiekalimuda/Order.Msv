@@ -26,6 +26,36 @@ namespace Order.Msv.Services
             _sendEndpointProvider = sendEndpointProvider;
         }
 
+        public async Task<ServiceResult<List<OrdersDto>>>GetAllOrderByCount(int take)
+        {
+            if(take == 0)
+            {
+                return new ServiceResult<List<OrdersDto>>(false) { IsSuccess = false, ErrorMessage = "Parameter take is 0." };
+            }
+            try
+            {
+                var takeOrders = await _context.TrxOrders
+                                .Include(x => x.TrxOrdersDetails)
+                                .Take(take).ToListAsync();
+
+               var orderDTO = _mapper.Map<List<OrdersDto>>(takeOrders);
+
+                return new ServiceResult<List<OrdersDto>>(true)
+                {
+                    IsSuccess = true,
+                    Data = orderDTO
+                };
+            }
+            catch(Exception ex)
+            {
+                return new ServiceResult<List<OrdersDto>>(false)
+                {
+                    IsSuccess = false,
+                    ErrorMessage = $"Take order failled, with error {ex.Message}"
+                };
+            }
+        }
+
         public async Task<ServiceResult<Guid>>DeleteOrder(Guid id)
         {
             try

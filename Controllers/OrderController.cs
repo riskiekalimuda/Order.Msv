@@ -23,6 +23,31 @@ namespace Order.Msv.Controllers
             _orderService = orderService;
         }
 
+        [HttpPost("GetOrdersByCount")]
+        public async Task<IActionResult> GetOrderdersByCount([FromBody] GetOrdersByCountDto orderByCount)
+        {
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdStr) || string.IsNullOrEmpty(userIdStr))
+            {
+                return Unauthorized("Unauthorized: User info not found in headers.");
+            }
+
+            if (!Guid.TryParse(userIdStr.ToString(), out Guid userId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
+            if (orderByCount == null)
+            {
+                return BadRequest("Payload is null");
+            }
+            var result = await _orderService.GetAllOrderByCount(orderByCount.take);
+            if(!result.IsSuccess)
+            {
+                return BadRequest($"Get order failed, with error: {result.ErrorMessage}.");
+            }
+            return Ok(result.Data);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult>DeleteOrder(Guid id)
         {

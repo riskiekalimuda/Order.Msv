@@ -32,6 +32,10 @@ namespace Order.Msv.Profiles
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.ProductId, opt => opt.MapFrom(src => src.ProductId))
                 .ForMember(dest => dest.Qty, opt => opt.MapFrom(src => src.Quantity));
+
+            CreateMap<TrxOrder, OrdersDto>()
+                .ForMember(dest => dest.OrderDetailsDto, opt=>opt.MapFrom(src=>src.TrxOrdersDetails));
+            CreateMap<TrxOrdersDetail, OrderDetailDto>();
         }
     }
 }

@@ -23,6 +23,32 @@ namespace Order.Msv.Controllers
             _orderService = orderService;
         }
 
+        [HttpPost("ApproveOrder")]
+        public async Task<IActionResult> ApproveOrder([FromBody] ApproveOrderRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is null.");
+            }
+
+            if (!Request.Headers.TryGetValue("X-User-Id", out var userIdStr) || string.IsNullOrEmpty(userIdStr))
+            {
+                return Unauthorized("Unauthorized: User info not found in headers.");
+            }
+
+            if (!Guid.TryParse(userIdStr.ToString(), out Guid userId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
+            var result = await _orderService.ApproveOrderAsync(request.OrderId);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+            return Ok(new { OrderId = request.OrderId, Message = "Order approved successfully." });
+        }   
+
         [HttpPost("GetOrdersByCount")]
         public async Task<IActionResult> GetOrderdersByCount([FromBody] GetOrdersByCountDto orderByCount)
         {

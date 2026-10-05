@@ -26,6 +26,32 @@ namespace Order.Msv.Services
             _sendEndpointProvider = sendEndpointProvider;
         }
 
+        public async Task<ServiceResult<TrxOrder>> ApproveOrderAsync(Guid orderId)
+        {
+            try
+            {
+                var order = await _context.TrxOrders.FirstOrDefaultAsync(o => o.Id == orderId);
+                if (order == null)
+                {
+                    return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Order not found", ErrorCode = "ORDER_NOT_FOUND" };
+                }
+                order.Status = "Approved";
+                order.UpdatedAt = DateTime.Now;
+                _context.TrxOrders.Update(order);
+                var approveOrderMessage = _mapper.Map<ApproveOrderMessage>(order);
+                var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{QueueNames.OrderQueue.ApproveOrderQueue}"));
+                await sendEndpoint.Send(approveOrderMessage);
+                await _context.SaveChangesAsync();
+
+                return new ServiceResult<TrxOrder>(true) { IsSuccess = true, Data = order };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error approving order with ID {OrderId}", orderId);
+                return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Error approving order", ErrorCode = "DATABASE_ERROR" };
+            }
+        }   
+
         public async Task<ServiceResult<List<OrdersDto>>>GetAllOrderByCount(int take)
         {
             if(take == 0)

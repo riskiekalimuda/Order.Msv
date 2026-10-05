@@ -30,7 +30,9 @@ namespace Order.Msv.Services
         {
             try
             {
-                var order = await _context.TrxOrders.FirstOrDefaultAsync(o => o.Id == orderId);
+                var order = await _context.TrxOrders
+                    .Include(o => o.TrxOrdersDetails)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
                 if (order == null)
                 {
                     return new ServiceResult<TrxOrder>(false) { IsSuccess = false, ErrorMessage = "Order not found", ErrorCode = "ORDER_NOT_FOUND" };

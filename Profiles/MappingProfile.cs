@@ -36,7 +36,8 @@ namespace Order.Msv.Profiles
             CreateMap<TrxOrder, OrdersDto>()
                 .ForMember(dest => dest.OrderDetailsDto, opt=>opt.MapFrom(src=>src.TrxOrdersDetails));
             CreateMap<TrxOrdersDetail, OrderDetailDto>();
-            CreateMap<TrxOrder, ApproveOrderMessage>();
+            CreateMap<TrxOrder, ApproveOrderMessage>()
+                .ForMember(dest => dest.TrxOrdersDetails, opt => opt.MapFrom(src => src.TrxOrdersDetails))  ;
             CreateMap<TrxOrdersDetail, ApprovedOrderDetailMessage>();
 
         }
